@@ -64,7 +64,8 @@ func status(c *cli.Context, date time.Time) error {
 	if time.Now().YearDay() == date.YearDay() && current != nil {
 		if current.Direction == In {
 			duration = duration + time.Now().Round(time.Minute).Sub(current.Time)
-			fmt.Println("Left to work:", time.Minute*491-duration) //8h11m
+			timeLeft := time.Minute*491 - duration
+			fmt.Printf("Left to work: %s (%s)\n", timeLeft, time.Now().Add(timeLeft).Format("15:04")) //8h11m
 		}
 	}
 
