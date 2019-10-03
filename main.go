@@ -12,9 +12,7 @@ import (
 var timelog TimeLog
 
 func main() {
-
 	app := cli.NewApp()
-
 	flags := []cli.Flag{
 		cli.StringFlag{
 			Name:  "date",
@@ -117,7 +115,7 @@ func calculate(c *cli.Context) error {
 		return err
 	}
 	difference := end.Sub(start)
-	difference = difference - lunch
+	difference -= lunch
 	fmt.Println("You have worked:", difference)
 
 	return nil
@@ -164,7 +162,6 @@ func stamp(c *cli.Context, dir Direction) error {
 			Time:      tl.Add(duration),
 			Direction: dir.Invert(),
 		})
-
 	}
 	return timelog.Save(filename)
 }

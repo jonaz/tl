@@ -31,27 +31,28 @@ func statusHandler(c *cli.Context) error {
 
 		date = date.AddDate(0, 0, i*-1)
 
+		fmt.Println(date)
+
 		err = status(c, date)
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
 
 func status(c *cli.Context, date time.Time) error {
-
 	var duration time.Duration
 	var current *TimeEntry
 	for k, v := range timelog {
-		if v.Time.YearDay() != date.YearDay() {
+		if !v.Time.Truncate(24 * time.Hour).Equal(date.Truncate(24 * time.Hour)) {
 			continue
 		}
+
 		if v.Direction == Out {
 			prev := timelog[k-1]
 			diff := v.Time.Sub(prev.Time)
-			duration = duration + diff
+			duration += diff
 		}
 
 		if !c.Bool("compact") {
@@ -61,9 +62,10 @@ func status(c *cli.Context, date time.Time) error {
 	}
 
 	// if last it in and not out we use current time to calculate how long we have worked if its on the same day as today
-	if time.Now().YearDay() == date.YearDay() && current != nil {
+	//if time.Now().YearDay() == date.YearDay() && current != nil {
+	if time.Now().Truncate(24*time.Hour).Equal(date.Truncate(24*time.Hour)) && current != nil {
 		if current.Direction == In {
-			duration = duration + time.Now().Round(time.Minute).Sub(current.Time)
+			duration += time.Now().Round(time.Minute).Sub(current.Time)
 			timeLeft := time.Minute*491 - duration
 			fmt.Printf("Left to work: %s (%s)\n", timeLeft, time.Now().Add(timeLeft).Format("15:04")) //8h11m
 		}
