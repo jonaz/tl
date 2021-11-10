@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/urfave/cli"
+	cli "github.com/urfave/cli/v2"
 )
 
 func statusHandler(c *cli.Context) error {
@@ -28,11 +28,7 @@ func statusHandler(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-
 		date = date.AddDate(0, 0, i*-1)
-
-		fmt.Println(date)
-
 		err = status(c, date)
 		if err != nil {
 			return err

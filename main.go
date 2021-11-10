@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/urfave/cli"
+	cli "github.com/urfave/cli/v2"
 )
 
 var timelog TimeLog
@@ -14,23 +14,23 @@ var timelog TimeLog
 func main() {
 	app := cli.NewApp()
 	flags := []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "date",
 			Value: time.Now().Format("2006-01-02"),
 			Usage: "Date",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "file",
 			Value: "/var/log/time.log",
 			Usage: "Logfile to save JSON data",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "compact",
 			Usage: "Print compact layout",
 		},
 	}
 
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		{
 			Name:    "calculate",
 			Aliases: []string{"c"},
@@ -121,6 +121,8 @@ func calculate(c *cli.Context) error {
 	return nil
 }
 
+const RFC3339Local = "2006-01-02T15:04:05"
+
 func stamp(c *cli.Context, dir Direction) error {
 	filename := c.String("file")
 
@@ -141,7 +143,11 @@ func stamp(c *cli.Context, dir Direction) error {
 
 	tl, err := time.ParseInLocation("2006-01-02 15:04", fmt.Sprintf("%s %s", c.String("date"), t), loc)
 	if err != nil {
-		return err
+		// we might have added a time in format 2021-11-09T17:13:01 lets try to parse that.
+		tl, err = time.ParseInLocation(RFC3339Local, t, loc)
+		if err != nil {
+			return fmt.Errorf("error parsing time in local format: %w", err)
+		}
 	}
 
 	te := &TimeEntry{
