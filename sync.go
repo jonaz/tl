@@ -42,7 +42,7 @@ func syncFromLockLog(c *cli.Context) error {
 
 	changes := 0
 
-	day := from.Truncate(time.Hour * 24)
+	day := from.Truncate(time.Hour * 24).Add(time.Hour * -24)
 	for {
 		day = day.Add(time.Hour * 24)
 		if day.After(to) {
