@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fatih/color"
 	cli "github.com/urfave/cli/v2"
 )
 
@@ -24,7 +25,7 @@ func statusHandler(c *cli.Context) error {
 	}
 
 	for i := 0; i < days; i++ {
-		date, err := time.Parse("2006-01-02", c.String("date"))
+		date, err := time.Parse(Date, c.String("date"))
 		if err != nil {
 			return err
 		}
@@ -40,6 +41,13 @@ func statusHandler(c *cli.Context) error {
 func status(c *cli.Context, date time.Time) error {
 	var duration time.Duration
 	var current *TimeEntry
+
+	if !bCal.IsWorkday(date) {
+		return nil
+	}
+
+	complete, _ := isDayComplete(date)
+
 	for k, v := range timelog {
 		if !v.Time.Truncate(24 * time.Hour).Equal(date.Truncate(24 * time.Hour)) {
 			continue
@@ -58,20 +66,64 @@ func status(c *cli.Context, date time.Time) error {
 	}
 
 	// if last it in and not out we use current time to calculate how long we have worked if its on the same day as today
-	//if time.Now().YearDay() == date.YearDay() && current != nil {
+	// if time.Now().YearDay() == date.YearDay() && current != nil {
 	if time.Now().Truncate(24*time.Hour).Equal(date.Truncate(24*time.Hour)) && current != nil {
 		if current.Direction == In {
 			duration += time.Now().Round(time.Minute).Sub(current.Time)
 			timeLeft := time.Minute*491 - duration
-			fmt.Printf("Left to work: %s (%s)\n", timeLeft, time.Now().Add(timeLeft).Format("15:04")) //8h11m
+			fmt.Printf("Left to work: %s (%s)\n", timeLeft, time.Now().Add(timeLeft).Format("15:04")) // 8h11m
 		}
 	}
 
 	if c.Bool("compact") {
-		fmt.Println(date.Format("2006-01-02"), duration)
+		if complete {
+			fmt.Println(date.Format(Date), duration)
+		} else {
+			fmt.Println(date.Format(Date), duration, incompleteString(complete))
+		}
 		return nil
 	}
 
-	fmt.Println("Total:", duration)
+	fmt.Println("Total:", duration, incompleteString(complete))
 	return nil
+}
+
+func isDayComplete(date time.Time) (bool, []Direction) {
+	inCnt := 0
+	outCnt := 0
+	for _, v := range timelog {
+		if !v.Time.Truncate(24 * time.Hour).Equal(date.Truncate(24 * time.Hour)) {
+			continue
+		}
+		if v.Direction == Out {
+			outCnt++
+		}
+		if v.Direction == In {
+			inCnt++
+		}
+	}
+
+	if inCnt == 0 && outCnt == 0 && bCal.IsWorkday(date) {
+		return false, []Direction{In, Out} // missing both directions
+	}
+
+	if inCnt == outCnt {
+		return true, nil
+	}
+
+	resDir := []Direction{}
+	if inCnt == 0 {
+		resDir = append(resDir, In)
+	}
+	if outCnt == 0 {
+		resDir = append(resDir, Out)
+	}
+
+	return false, resDir
+}
+func incompleteString(complete bool) string {
+	if complete {
+		return ""
+	}
+	return color.RedString("incomplete")
 }

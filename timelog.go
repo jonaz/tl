@@ -54,7 +54,6 @@ func (tl *TimeLog) Load(filePath string) error {
 	return err
 }
 func (tl *TimeLog) Save(filePath string) error {
-	//f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	f, err := os.Create(filePath)
 	if err != nil {
 		log.Fatal(err)
